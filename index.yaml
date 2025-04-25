@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  ms-template:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-04-25T14:13:45.397411826Z"
+    description: A Helm chart for Kubernetes
+    digest: 6ed8d5c5c07cda6c9d738950f2455e754f37a1b60d36153ebec105cce4a520cd
+    name: ms-template
+    type: application
+    urls:
+    - https://botopsy.github.io/helm/ms-template-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-04-25T14:13:45.3968427Z"
