@@ -1,0 +1,6 @@
+repositoryID: ""  # Leave this empty when creating the repo on Artifact Hub
+name: botopsy-helm-charts
+displayName: Botopsy Helm Charts
+description: A collection of Botopsy Helm charts.
+type: helm
+url: https://botopsy.github.io/helm
