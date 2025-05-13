@@ -1,0 +1,93 @@
+{{- if .Values.cronJob.enabled }}
+{{- range $name, $job := .Values.cronJob.jobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}-cron-job
+  labels:
+    {{- include "application.labels" $ | nindent 4 }}
+    {{- with $job.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if $job.annotations }}
+  annotations:
+{{ toYaml $job.annotations | indent 4 }}
+{{- end }}
+  schedule: {{ $job.schedule | quote }}
+  {{- with $job.constrains }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "application.labels" $ | nindent 12 }}
+        spec:
+          {{- if $.Values.serviceAccount.name }}
+          serviceAccountName: {{ $.Values.serviceAccount.name }}
+            {{- else }}
+          serviceAccountName: {{ template "application.name" $ }}
+          {{- end }}
+          {{- if $job.imagePullSecrets}}
+          imagePullSecrets: 
+            - name: {{ $job.imagePullSecrets }}
+          {{- end }}
+          containers:
+            - name: {{ $name }}
+              {{- $image := required (print "Undefined image repo for container '" $name "'") $job.image.repository }}
+              {{- with $job.image.tag    }} {{- $image = print $image ":" . }} {{- end }}
+              image: {{ $image }}
+              {{- if $job.imagePullPolicy }}
+              imagePullPolicy: {{ $job.imagePullPolicy }}
+              {{- end }}
+              {{- if $job.env }}
+              env:
+              {{- range $key, $value := $job.env }}
+                - name: {{ include "application.tplvalues.render" ( dict "value" $key "context" $ ) }}
+                {{ include "application.tplvalues.render" ( dict "value" $value "context" $ ) | indent 2 }}
+              {{- end }}
+              {{- end }}
+              {{- with $job.envFrom }}
+              envFrom:
+              {{ toYaml . | indent 2 }}
+              {{- end }}
+              {{- if $job.command }}
+              command: {{ $job.command }}
+              {{- end }}
+              {{- if $job.args }}
+              args:
+                {{- toYaml $job.args | nindent 16 }}
+              {{- end }}
+              {{- if $job.resources }}
+              resources:
+                {{- toYaml $job.resources | nindent 16 }}
+              {{- end }}
+              {{- if $job.volumeMounts }}
+              volumeMounts:
+                {{- toYaml $job.volumeMounts | nindent 16 }}
+              {{- end }}
+          {{- with $job.nodeSelector }}
+          nodeSelector:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $job.affinity }}
+          affinity:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $job.tolerations }}
+          tolerations:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $job.volumes }}
+          volumes:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- if $job.restartPolicy}}
+          restartPolicy: {{ $job.restartPolicy }}
+          {{ else }}
+          restartPolicy: OnFailure
+          {{ end }}
+{{- end }}
+{{- end }}

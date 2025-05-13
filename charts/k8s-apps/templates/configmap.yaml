@@ -1,0 +1,42 @@
+{{- if .Values.configMap.enabled }}
+{{- range $nameSuffix, $data := .Values.configMap.files }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "application.name" $ }}-{{ $nameSuffix }}
+  labels:
+    {{- include "application.labels" $ | nindent 4 }}
+    {{- with $.Values.configMap.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if $.Values.configMap.annotations }}
+  annotations:
+{{ toYaml $.Values.configMap.annotations | indent 4 }}
+{{- end }}
+data:
+{{ include "application.tplvalues.render" ( dict "value" $data "context" $ ) | indent 2 }}
+{{- end -}}
+{{- end -}}
+
+{{- if and (.Values.configMap.enabled) .Values.configMap.filesTemplates.enabled }}
+{{- range $path, $_ :=  .Files.Glob ($.Values.configMap.filesTemplates.filesPath) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "application.name" $ }}-{{ (base $path) | replace ".yaml" "" | replace ".json" "" | replace ".properties" "" }}
+  labels:
+    {{- include "application.labels" $ | nindent 4 }}
+    {{- with $.Values.configMap.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if $.Values.configMap.annotations }}
+  annotations:
+{{ toYaml $.Values.configMap.annotations | indent 4 }}
+{{- end }}
+data:
+  {{ base $path }}: | 
+{{ tpl ($.Files.Get $path) $ | indent 4 }}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,203 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "application.name" . }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.deployment.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if .Values.deployment.annotations }}
+  annotations:
+{{ toYaml .Values.deployment.annotations | indent 4 }}
+{{- end }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  strategy:
+    type: {{ .Values.deployment.strategy.type }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deployment.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.deployment.strategy.rollingUpdate.maxSurge }}
+  selector:
+    matchLabels:
+{{ include "application.selectorLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{- include "application.labels" . | nindent 8 }}
+{{- if .Values.deployment.podLabels }}
+{{ toYaml .Values.deployment.podLabels | indent 8 }}
+{{- end }}
+      {{- with .Values.deployment.additionalPodAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.imageCredentials }}
+      imagePullSecrets:
+        - name: {{ include "application.name" . }}-registrykey
+      {{- else }}
+      {{- with .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "application.serviceAccount" . }}
+      {{- if .Values.deployment.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.deployment.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- if .Values.deployment.terminationGracePeriodSeconds }}
+      revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+      {{- end }}
+      {{- if .Values.deployment.initContainers }}
+      initContainers:
+        {{- toYaml .Values.deployment.initContainers | nindent 8 }}
+      {{- end }}
+      containers:
+      {{- if .Values.deployment.additionalContainers }}
+        {{- toYaml .Values.deployment.additionalContainers | nindent 8 }}
+      {{- end }}
+        - name: {{ include "application.name" . }}
+          {{- if .Values.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.deployment.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          image: {{ include "application.image" . }}
+          imagePullPolicy: {{ .Values.deployment.imagePullPolicy }}
+          {{- if .Values.deployment.command }}
+          command: {{- include "application.tplvalues.render" (dict "value" .Values.deployment.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.args }}
+          args: {{- include "application.tplvalues.render" (dict "value" .Values.deployment.args "context" $) | nindent 12 }}
+          {{- end }}
+          ports:
+            {{- range .Values.deployment.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol }}
+            {{- end }}
+          {{- if or (.Values.deployment.volumeMounts) (and (eq .Values.persistence.enabled true) (eq .Values.persistence.mountPVC true) )}}
+          volumeMounts:
+            {{- if (eq .Values.persistence.mountPVC true) }}
+            - mountPath: {{ .Values.persistence.mountPath }}
+              name: {{ template "application.name" . }}-data
+            {{- end }}
+            {{- if .Values.deployment.volumeMounts }}
+              {{- toYaml .Values.deployment.volumeMounts | default "" | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.envFrom }}
+          envFrom:
+            {{- range .Values.deployment.envFrom }}
+            {{- if (eq .type "configmap") }}
+            - configMapRef:
+                {{- if .nameSuffix }}
+                name: {{ template "application.name" $ }}-{{ include "application.tplvalues.render" ( dict "value" .nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "application.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- if (eq .type "secret") }}
+            - secretRef:
+                {{- if .nameSuffix }}
+                name: {{ template "application.name" $ }}-{{ include "application.tplvalues.render" ( dict "value" .nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "application.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.env }}
+          env:
+            {{- toYaml .Values.deployment.env | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.startupProbe.enabled }}
+          startupProbe:
+            initialDelaySeconds: {{ .Values.deployment.startupProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.deployment.startupProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.deployment.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.deployment.startupProbe.successThreshold }}
+            failureThreshold: {{ .Values.deployment.startupProbe.failureThreshold }}
+            {{- if .Values.deployment.startupProbe.exec }}
+            exec:
+              {{- toYaml .Values.deployment.startupProbe.exec | nindent 14 }}
+            {{- else if .Values.deployment.startupProbe.httpGet }}
+            httpGet:
+              {{- toYaml .Values.deployment.startupProbe.httpGet | nindent 14 }}
+            {{- else if .Values.deployment.startupProbe.tcpSocket }}
+            tcpSocket:
+              {{- toYaml .Values.deployment.startupProbe.tcpSocket | nindent 14 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.deployment.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.deployment.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.deployment.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deployment.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.deployment.livenessProbe.failureThreshold }}
+            {{- if .Values.deployment.livenessProbe.exec }}
+            exec:
+              {{- toYaml .Values.deployment.livenessProbe.exec | nindent 14 }}
+            {{- else if .Values.deployment.livenessProbe.httpGet }}
+            httpGet:
+              {{- toYaml .Values.deployment.livenessProbe.httpGet | nindent 14 }}
+            {{- else if .Values.deployment.livenessProbe.tcpSocket }}
+            tcpSocket:
+              {{- toYaml .Values.deployment.livenessProbe.tcpSocket | nindent 14 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.readinessProbe.enabled }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.deployment.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.deployment.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.deployment.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deployment.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.deployment.readinessProbe.failureThreshold }}
+            {{- if .Values.deployment.readinessProbe.exec }}
+            exec:
+              {{- toYaml .Values.deployment.readinessProbe.exec | nindent 14 }}
+            {{- else if .Values.deployment.readinessProbe.httpGet }}
+            httpGet:
+              {{- toYaml .Values.deployment.readinessProbe.httpGet | nindent 14 }}
+            {{- else if .Values.deployment.readinessProbe.tcpSocket }}
+            tcpSocket:
+              {{- toYaml .Values.deployment.readinessProbe.tcpSocket | nindent 14 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.resources }}
+          resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
+          {{- end }}
+      {{- if or (.Values.deployment.volumes) (and (eq .Values.persistence.enabled true) (eq .Values.persistence.mountPVC true) )}}
+      volumes:
+        {{- if (eq .Values.persistence.mountPVC true) }}
+        - name: {{ template "application.name" . }}-data
+          persistentVolumeClaim:
+            {{- if .Values.persistence.name }}
+            claimName: {{ .Values.persistence.name }}
+            {{- else }}
+            claimName: {{ template "application.name" . }}-data
+            {{- end }}
+        {{- end }}
+        {{- if .Values.deployment.volumes }}
+          {{- toYaml .Values.deployment.volumes | default "" | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

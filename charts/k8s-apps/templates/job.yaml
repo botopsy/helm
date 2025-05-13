@@ -1,0 +1,82 @@
+{{- if .Values.job.enabled }}
+{{- range $name, $job := .Values.job.jobs }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-job
+  labels:
+    {{- include "application.labels" $ | nindent 4 }}
+    {{- with $job.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if $job.annotations }}
+  annotations:
+{{ toYaml $job.annotations | indent 4 }}
+{{- end }}
+spec:
+  {{- with $job.patterns }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "application.labels" $ | nindent 8 }}
+    spec:
+      {{- if $job.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ $job.imagePullSecrets }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          {{- $image := required (print "Undefined image repo for container '" $name "'") $job.image.repository }}
+          {{- with $job.image.tag    }} {{- $image = print $image ":" . }} {{- end }}
+          image: {{ $image }}
+          {{- if $job.imagePullPolicy }}
+          imagePullPolicy: {{ $job.imagePullPolicy }}
+          {{- end }}
+          {{- if $job.env }}
+          env:
+            {{- range $job.env }}
+            - name: {{ .name | quote}}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $job.command }}
+          command: {{ $job.command }}
+          {{- end }}
+          {{- if $job.args }}
+          args:
+            {{- toYaml $job.args | nindent 12 }}
+          {{- end }}
+          {{- if $job.resources }}
+          resources:
+            {{- toYaml $job.resources | nindent 12 }}
+          {{- end }}
+          {{- if $job.volumeMounts }}
+          volumeMounts:
+            {{- toYaml $job.volumeMounts | nindent 12 }}
+          {{- end }}
+        {{- with $job.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with $job.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with $job.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with $job.volumes }}
+      volumes:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- if $job.restartPolicy}}
+      restartPolicy: {{ $job.restartPolicy }}
+      {{ else }}
+      restartPolicy: Never
+      {{ end }}
+{{- end }}
+{{- end }}

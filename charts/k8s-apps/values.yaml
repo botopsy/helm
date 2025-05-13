@@ -1,0 +1,720 @@
+#######################################
+###     Name of the Application     ###
+#######################################
+
+applicationName: "app"
+
+###############################
+###     SERVICE ACCOUNT     ###
+###############################
+
+# ServiceAccount provides an identity for processes that run in a Pod.
+# A process inside a Pod can use the identity of its associated service account to authenticate to the cluster's API server.
+
+serviceAccount:  
+  create: true   # just mean that account already exists and not require to create it again
+  name: ""       # custom account name
+  
+  # Additional Labels on Service account
+  additionalLabels: {}
+    # key: value
+
+  # Annotations on Service account 
+  annotations: {}
+    # key: value
+
+##########################
+###     DEPLOYMENT     ###
+##########################
+
+# A Kubernetes Deployment tells Kubernetes how to create or modify instances of the Pods that hold a containerized application.
+
+deployment:
+
+  # Init Containers which runs before the app container
+  initContainers: []
+    # - name: init-container
+    #   image: busybox
+    #   imagePullPolicy: IfNotPresent
+    #   command: ['/bin/sh']
+
+  # Add additional/sidecar container which runs alongside app container
+  # Allow you to enhance and extend the functionalities of the main container without having to modify its codebase.
+  additionalContainers: []
+    # - name: sidecar-contaner
+    #   image: busybox
+    #   imagePullPolicy: IfNotPresent
+    #   command: ['/bin/sh']
+    
+  # Number of Pod replicas to be created
+  replicaCount: 1
+
+  # By default deploymentStrategy is set to rollingUpdate with maxSurge of 25% and maxUnavailable of 25%
+  # You can change type to `Recreate` or can uncomment `rollingUpdate` specification and adjust them to your usage.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
+  # Security Context for the Pod
+  podSecurityContext:
+    # runAsUser: 1000    # integer, not quoted
+    # runAsGroup: 1000   # integer, not quoted
+    # runAsNonRoot: true
+    # fsGroup: 1001
+
+  # Security Context for the Container
+  containerSecurityContext:
+    # runAsUser: 1001     # integer, not quoted
+    # runAsGroup: 1001    # integer, not quoted
+    # runAsNonRoot: true 
+    # privileged: false
+    # allowPrivilegeEscalation: false
+    # readOnlyRootFilesystem: true
+    # capabilities:
+    #   drop:
+    #   - ALL
+  
+  # Provides the amount of grace time prior to the container being forcibly terminated
+  terminationGracePeriodSeconds: {}     # default value is 30 seconds
+
+  # Additional labels for Deployment
+  additionalLabels: {}
+    # key: value
+
+  # Annotations on Deployments
+  annotations: {}
+    # key: value
+  
+  # Additional labels added on Pod which is used in Service's Label Selector
+  podLabels: {}
+    # env: prod
+
+  # Additional Pod Annotations added on Pod created by this Deployment
+  additionalPodAnnotations: {}
+    # key: value
+
+  # Specifies the number of old ReplicaSets to retain in order to allow rollback
+  revisionHistoryLimit: {}    # default value is 10
+  
+  # Application Image
+  image:
+    repository: "nginxdemos/hello" # example.com/repository  # Image repository
+    tag: ""                        # Image tag. Use Chart app version when empty
+
+  # Images pull strategy which tell Kubelet service on how to pull the specified image during an update. 
+  # There are three image policy pull options: `Always`, `IfNotPresent` and `Never`
+  imagePullPolicy: IfNotPresent
+
+  # Secrets used to pull image from private repositories
+  imagePullSecrets: []
+
+  # Creates a secret for imagePullSecrets
+  imageCredentials: {}     
+    # registry: quay.io
+    # username: someone
+    # password: sillyness
+    # email: someone@host.com
+  
+  # Custom bash command for the Container that run in the Pod
+  command: []
+  # Example:
+  # command: ["/bin/sh"]
+
+  # Arguments for the Container that run in the Pod
+  args: []
+  # Example:
+  # args: ["-c", "while true; do echo hello; sleep 10; done"]
+  # or
+  # args:
+  #   - "-c"
+  #   - "while true; do echo hello; sleep 10; done"
+
+  # List of ports for the Container
+  ports:
+    - name: http
+      containerPort: 80
+      protocol: TCP
+    # - name: https
+    #   containerPort: 443
+    #   protocol: TCP
+
+  # Environment variables to be passed to the App Container
+  env: []
+    # - name: EXAMPLE_ENV_1
+    #   value: "https://test-1.example.com"
+    # - name: EXAMPLE_ENV_2
+    #   value: "1234"
+    # - name: EXAMPLE_ENV_3
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: some.field.ref
+    # - name: EXAMPLE_ENV_4
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: secret_name
+    #       key: secret_key
+    # - name: EXAMPLE_ENV_5
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       name: configmap_name
+    #       key: configmap_key
+
+  # If want to mount Envs from configmap or secret
+  envFrom: []
+    # - type: configmap
+    #   nameSuffix: production-config
+    # - type: configmap
+    #   nameSuffix: logging-config
+    # - type: secret
+    #   nameSuffix: postgres-config
+
+  # Volumes to be added to the Pod
+  volumes: []
+    # - name: volume-name
+    #   emptyDir: {}
+    # - name: config-volume
+    #   configMap:        
+    #     name: configmap-name
+    # - name: secret-volume
+    #   secret:        
+    #     secretName: secret-name
+    # - name: persistent-volume-name
+    #   persistentVolumeClaim:
+    #     claimName: claim-name
+
+  # Mount path for Volumes 
+  volumeMounts: []
+    # - name: volume-name
+    #   mountPath: /path
+    #   subPath: /subpath
+    #   readOnly: true
+    # - name: volume-name-2
+    #   mountPath: /path-2
+
+  # Resource request for Containers in a Pod
+  resources: {}
+    # limits:    # top limit, application that overflow this limit will be killed
+    #   cpu: 100m
+    #   memory: 128M
+    # requests:  # resources required to deploy and start application
+    #   cpu: 100m
+    #   memory: 128M
+
+  # STARTUP probe (verifies whether the application within a container is started)
+  startupProbe:
+    enabled: false
+
+    initialDelaySeconds: 10
+    timeoutSeconds: 1           
+    periodSeconds: 10           
+    successThreshold: 1         
+    failureThreshold: 3
+    # Must specify either one of the following field when enabled
+    httpGet: {}
+    exec: {}
+    tcpSocket: {}
+
+  # LIVENESS Probe (determine whether or not an application running in a container is in a healthy state)
+  livenessProbe:
+    enabled: false
+
+    initialDelaySeconds: 10
+    timeoutSeconds: 1           
+    periodSeconds: 10           
+    successThreshold: 1         
+    failureThreshold: 3
+    # Must specify either one of the following field when enabled
+    httpGet: {}
+    exec: {}
+    tcpSocket: {}
+  
+  # READINESS Probe (determine whether or not a container is ready to serve requests)
+  readinessProbe:
+    enabled: false
+
+    initialDelaySeconds: 10
+    timeoutSeconds: 1
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+    # Must specify either one of the following field when enabled
+    httpGet: {}
+    exec: {}
+    tcpSocket: {}
+    
+    # EXAMPLE of probe that uses HTTP GET request:
+
+    # httpGet:
+    #   path: /healthz
+    #   port: http
+    #   scheme: HTTP
+
+    # NOTE: An HTTP check is ideal for applications that return HTTP status codes, such as REST APIs.
+    #       HTTP probe uses GET requests to check the health of an application. 
+    #       The check is successful if the HTTP response code is in the range 200-399.
+    
+    # EXAMPLE of probe that uses command execution check:
+
+    # exec:
+    #   command:
+    #   - cat
+    #   - /tmp/healthy
+
+    # NOTE: Container execution checks are ideal in scenarios where you must determine the status of the container
+    #       based on the exit code of a process or shell script running in the container.
+    
+    # EXAMPLE of probe that uses a TCP socket:
+
+    # tcpSocket:
+    #   port: 8080
+
+    # NOTE: A TCP socket check is ideal for applications that run as daemons, and open TCP ports, 
+    #       such as database servers, file servers, web servers, and application servers.
+
+  # Node labels for Pod assignment  
+  nodeSelector: {}
+    # disktype: ssd
+
+  # Taints to tolerate on Node assignment
+  tolerations: []
+    # - key: "dedicated"
+    #   operator: "Equal"
+    #   value: "app"
+    #   effect: "NoSchedule"
+
+  # Pod affinity and pod anti-affinity allow you to specify rules about how Pods should be placed relative to other Pods
+  affinity: {}
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #     - matchExpressions:
+    #       - key: disktype
+    #         operator: In
+    #         values:
+    #         - ssd
+
+    # podAntiAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     - labelSelector:
+    #         matchExpressions:
+    #           - key: app
+    #             operator: In
+    #             values:
+    #               - {{ include "application.name" . }}
+    #           - key: release
+    #             operator: In
+    #             values:
+    #               - {{ .Release.Name }}
+    #       topologyKey: "kubernetes.io/hostname"
+
+##########################################
+###     HORIZONTAL POD AUTOSCALING     ### 
+###               (HPA)                ###
+##########################################
+
+# HPA changes the shape of your Kubernetes workload by automatically increasing or decreasing 
+# the number of Pods in response to the workload's CPU or Memory consumption.
+
+autoscaling:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+
+  annotations: {}
+    # key: value
+    
+  minReplicas: 1
+  maxReplicas: 10
+  resource:
+    cpu_averageUtilization: 80
+    memory_averageUtilization: 80
+
+#################################
+###     PERSISTENT VOLUME     ###
+#################################
+
+# Add Storage volumes to the Pods
+
+persistence:
+  enabled: false
+  mountPVC: false
+  mountPath: "/"
+  name: ""
+  accessMode: ReadWriteOnce
+  ## If defined, storageClass: <storageClass>
+  ## If set to "-", storageClass: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClass spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  storageClass: "-"
+  additionalLabels: {}
+    # key: "value"
+  annotations: {}
+    # "helm.sh/resource-policy": keep
+  storageSize: 8Gi
+  volumeMode: ""
+  volumeName: ""
+
+###########################
+###     CONFIG-MAPS     ###
+###########################
+
+# ConfigMap is an object that lets you store configuration for other objects to use.
+
+configMap:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+
+  annotations: {}
+    # key: value
+
+  files: {}
+    # nameSuffix of configMap
+    # code-config: 
+    #   config.json: |-                                    
+    #     {                                                
+    #       "key1": "value1",
+    #       "key2": "value2"                                 
+    #     }
+    # dev-config:
+    #     key1: value1
+    #     key2: value2
+  
+  # Enable this option if you're planning to use existing and predefined config files with different extensions
+  filesTemplates:
+    enabled: false
+    filesPath: "config_files/*.*"
+
+##################################
+###     Additional Secrets     ###
+##################################
+
+# Secret is an object which store sensitive data, such as authentication tokens, keys, passwords, usernames, and more.
+
+secret:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+  
+  annotations: {}
+    # key: value
+
+  files: {}
+    # nameSuffix of Secret
+    # credentials:
+    #   data:
+    #     secretKey1: secretValue1
+    #     secretKey2: secretValue2
+    # password:
+    #   data:
+    #     secretKey1: secretValue1
+    #     secretKey2: secretValue2
+
+################################
+###     External Secrets     ###
+################################
+
+# Allows you to use external secret management systems (e.g., AWS Secrets Manager) to securely add secrets in Kubernetes.
+
+externalSecret:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+
+  annotations: {}
+    # key: value
+
+  # Default SecretStore for all externalsecrets defines which SecretStore to use when fetching the secret data
+  secretStore:
+    name: tenant-vault-secret-store
+    # kind: ClusterSecretStore   # Defaults to SecretStore if not specified 
+
+  # RefreshInterval is the amount of time before the values reading again from the SecretStore provider
+  refreshInterval: "1m"
+  files:
+    # mongodb:
+    # # Data defines the connection between the Kubernetes Secret keys and the Provider data
+    #   data:
+    #      mongo-password: 
+    #        remoteRef: 
+    #           key: monodb
+    #           property: password 
+    #   secretStore:                       
+    #      name: secret-store-name-2    # specify if value is other than default SecretStore  
+    #   annotations: {}
+    #   labels:
+    #      example.com/app: mongodb 
+
+    # postgres:
+    #   # Used to fetch all properties from the Provider key
+    #     dataFrom:
+    #       key: postgres
+
+###########################################
+###     Pod Disruption Budget (PDB)     ###
+###########################################
+
+# PDB ensure that a minimum number of replicas are available at all times, 
+# which helps maintain the high availability of critical workloads during node maintenance or failures.
+
+podDisruptionBudget:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+
+  annotations: {}
+    # key: value
+  
+  # The number of Pods that must always be available, even during a disruption (eviction).
+  # Can be either an absolute number or a percentage.
+  minAvailable: 1
+
+  # The number of Pods that can be unavailable after the eviction.
+  # Can be either an absolute number or a percentage.
+  # maxUnavailable: 1
+
+#######################
+###     SERVICE     ###
+#######################
+
+# Service object exposes groups of Pods over a Network.
+
+service:
+  additionalLabels: {}
+    # expose: true
+
+  annotations: {}
+    # kubernetes.io/ingress.class: external-ingress
+    # ingress.kubernetes.io/rewrite-target: /
+    # ingress.kubernetes.io/force-ssl-redirect: true
+
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    # - name: https
+    #   port: 443
+    #   protocol: TCP
+    #   targetPort: 8443
+  # There are four types of Kubernetes services: ClusterIP,  NodePort, LoadBalancer and ExternalName
+  type: ClusterIP
+
+#######################
+###     INGRESS     ###
+#######################
+
+# Object that provides routing rules to manage access to the services in a Kubernetes cluster.
+
+ingress:         
+  enabled: false
+
+  # Name of the ingress class
+  className: ""
+
+  # Port of the service that serves pods
+  servicePort: http
+  
+  # Set pathType: default is ImplementationSpecific; Options: Exact, Prefix
+  pathType: ImplementationSpecific
+
+  # Additional labels for this Ingress
+  additionalLabels: {}
+    # key: value
+
+  # Annotations for setting traffic and SSL manager controllers
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # ingress.kubernetes.io/rewrite-target: /
+    # ingress.kubernetes.io/force-ssl-redirect: true
+    # cert-manager.io/cluster-issuer: letsencrypt-env
+
+  # List of host addresses to be exposed by this Ingress
+  hosts:
+    # - host: chart-example-1.local
+    # - host: chart-example-2.local
+    #   paths: 
+    #     - path: /
+    #       pathType: ''
+    #       serviceName: ''
+    #       servicePort: ''
+    #     - path: /subpath
+    #       pathType: ''
+    #       serviceName: ''
+    #       servicePort: ''
+    - host: '{{ .Release.Name }}.example.com'
+      paths:
+        - path: /
+
+  # TLS details for this Ingress
+  tls: []
+    # Secrets must be manually created in the namespace.
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+
+#########################################
+###     ROLE BASED ACCESS CONTROL     ###
+###              (RBAC)               ###
+#########################################
+
+# RBAC is a key security control to ensure that cluster users and workloads 
+# have only the access to resources required to execute their roles.
+
+rbac:
+  enabled: false
+
+  additionalLabels: {}
+    # key: value
+    
+  annotations: {}
+    # key: value
+
+  existingRoles: []
+    # - name: admins
+    # - name: devs
+
+  # Create Roles (Namespaced) 
+  # which will give created service account limited access to namespaces resources 
+  roles: []
+    # - name: configmaps
+    #   rules:
+    #   - apiGroups:
+    #       - ""
+    #     resources:
+    #       - configmaps
+    #     verbs:
+    #       - get
+    # - name: secrets
+    #   rules:
+    #   - apiGroups:
+    #       - ""
+    #     resources:
+    #       - secrets
+    #     verbs:
+    #       - get
+
+  # NOTE: After creating Role, we need to create Role Binding, which grants the permissions 
+  #       defined in a Role to a User or set of Users, within a specific namespace.
+
+  existingClusterroles: []
+    # - name: admins
+    # - name: devs
+
+  # Create ClusterRoles (Clusterwide)
+  clusterroles: []
+    # - name: configmaps
+    #   rules:
+    #   - apiGroups:
+    #       - ""
+    #     resources:
+    #       - configmaps
+    #     verbs:
+    #       - get
+    # - name: pods
+    #   rules:
+    #   - apiGroups:
+    #       - ""
+    #     resources:
+    #       - pods
+    #     verbs:
+    #       - get
+    #       - list
+    #       - watch
+  
+  # NOTE: ClusterRole is a set of permissions that can be assigned to resources within a given cluster
+  #       and needs to be bound with a ClusterRoleBinding which grants that access cluster-wide.
+
+########################
+###     Cron Job     ###
+########################
+
+# CronJob is meant for performing regular scheduled actions such as backups, report generation, and so on.
+# One CronJob object is like one line of a crontab (cron table) file on a Unix system. 
+# It runs a job periodically on a given schedule, written in Cron format.
+
+cronJob:
+  enabled: false
+
+  jobs:
+    hello:
+      additionalLabels: {}
+        # key: value
+      annotations: {}
+        # key: value
+      schedule: "* * * 8 *"
+      constrains: {}
+        # successfulJobsHistoryLimit: 1
+        # failedJobsHistoryLimit: 1
+        # concurrencyPolicy: Forbid
+      imagePullSecrets: test
+      imagePullPolicy: IfNotPresent
+      image:
+        repository: busybox
+        tag: stable
+      # env: 
+      #   KEY:
+      #     value: VALUE
+      command: ["/bin/sh"]
+      args: ["-c","date; echo Hello from the Kubernetes cluster"]
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # volumes:
+      #   - name: volume-name
+      #     emptyDir: {}
+      # volumeMounts:
+      #   - name: volume-name
+      #     mountPath: /path
+
+###################
+###     Job     ###
+###################
+
+# Kubernetes Jobs are resources used to run short-lived, parallel, or sequential batch tasks within a Kubernetes cluster.
+# They ensure a specified number of pods successfully complete their tasks before considering the job as finished.
+
+job:
+  enabled: false
+
+  jobs:
+    hello:
+      additionalLabels: {}
+        # key: value
+      annotations: {}
+        # key: value
+      patterns:
+        backoffLimit: 2
+        # completions: 2
+        # parallelism: 2
+        # activeDeadlineSeconds: 15
+      imagePullSecrets: []
+      imagePullPolicy: IfNotPresent
+      image:
+        repository: busybox
+        tag: stable
+      # env: 
+      #   - name: VAR1
+      #     value: value1
+      command: ["/bin/sh","-c"]
+      args: ["echo 'Hello from the Kubernetes cluster'; sleep 5"]
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # volumes:
+      #   - name: volume-name
+      #     emptyDir: {}
+      # volumeMounts:
+      #   - name: volume-name
+      #     mountPath: /path
