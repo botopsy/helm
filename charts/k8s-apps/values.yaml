@@ -100,7 +100,7 @@ deployment:
   
   # Application Image
   image:
-    repository: "nginxdemos/hello" # example.com/repository  # Image repository
+    repository: "ghcr.io/botopsy/go-app-2" # example.com/repository  # Image repository
     tag: ""                        # Image tag. Use Chart app version when empty
 
   # Images pull strategy which tell Kubelet service on how to pull the specified image during an update. 
