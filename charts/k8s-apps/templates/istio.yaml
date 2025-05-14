@@ -12,7 +12,9 @@ metadata:
     {{- end }}
 spec:
   parentRefs:
-  - name: {{ .Values.httpRoute.gatewayName }}
+  - group: gateway.networking.k8s.io	
+    kind: Gateway
+    name: {{ .Values.httpRoute.gatewayName }}
     {{- if .Values.httpRoute.gatewayNamespace }}
     namespace: {{ .Values.httpRoute.gatewayNamespace }}
     {{- end }}
@@ -32,6 +34,8 @@ spec:
           value: "/"
       {{- end }}
     backendRefs:
-    - name: {{ template "application.name" . }}
+    - group: ''	
+      kind: Service
+      name: {{ template "application.name" . }}
       port: {{ .Values.httpRoute.servicePort }}
 {{ end }}
