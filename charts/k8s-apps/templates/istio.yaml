@@ -36,6 +36,7 @@ spec:
     backendRefs:
     - group: ''	
       kind: Service
+      weight: 1
       name: {{ template "application.name" . }}
       port: {{ .Values.httpRoute.servicePort }}
 {{ end }}
