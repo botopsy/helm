@@ -2,6 +2,7 @@
 ---
 {{- $applicationNameTpl := include "application.name" . -}}
 {{- $servicePort := .Values.ingress.servicePort -}}
+{{- $svcPort := .Values.service.port -}}
 {{- $pathType := .Values.ingress.pathType -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -31,9 +32,9 @@ spec:
           pathType: {{ default "ImplementationSpecific" (.pathType) }}
           backend:
             service:
-              name: {{ default $applicationNameTpl (.serviceName) }}
+              name: {{ (.serviceName) | default $applicationNameTpl }}
               port:
-                name: {{ default "http" (.servicePort) }}
+                name: {{ $servicePort | default "http"}}
         {{- end }}
         {{- else }}
         - path: "/"
@@ -42,7 +43,7 @@ spec:
             service:
               name: {{ $applicationNameTpl }}
               port:
-                name: {{ default "http" (.servicePort) }}
+                name: {{ $svcPort }}
         {{- end }}
     {{- end -}}
 {{- if .Values.ingress.tls }}

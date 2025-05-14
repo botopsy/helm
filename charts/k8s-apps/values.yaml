@@ -132,10 +132,10 @@ deployment:
   #   - "while true; do echo hello; sleep 10; done"
 
   # List of ports for the Container
-  ports:
-    - name: http
-      containerPort: 80
-      protocol: TCP
+  ports: []
+    # - name: http
+    #   containerPort: 80
+    #   protocol: TCP
     # - name: https
     #   containerPort: 443
     #   protocol: TCP
@@ -497,11 +497,13 @@ service:
     # ingress.kubernetes.io/rewrite-target: /
     # ingress.kubernetes.io/force-ssl-redirect: true
 
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 8080
+  # port define when you use single port, ports for multiple
+  port: 8080
+  ports: []
+    # - name: http
+    #   port: 80
+    #   protocol: TCP
+    #   targetPort: 8080
     # - name: https
     #   port: 443
     #   protocol: TCP
@@ -519,10 +521,10 @@ ingress:
   enabled: false
 
   # Name of the ingress class
-  className: ""
+  ingressClassName: ""
 
   # Port of the service that serves pods
-  servicePort: http
+  servicePort: 8080
   
   # Set pathType: default is ImplementationSpecific; Options: Exact, Prefix
   pathType: ImplementationSpecific
@@ -562,6 +564,18 @@ ingress:
     #   hosts:
     #     - chart-example.local
 
+httpRoute:
+  enabled: false
+  additionalLabels: {}
+  hostname: ""
+  servicePort: 8080
+  parentRefs:
+    - name: istio-gateway
+      namespace: istio-system
+  rules: []
+
+virtualService:
+  enabled: false
 #########################################
 ###     ROLE BASED ACCESS CONTROL     ###
 ###              (RBAC)               ###

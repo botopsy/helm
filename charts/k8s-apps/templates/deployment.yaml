@@ -76,10 +76,12 @@ spec:
           args: {{- include "application.tplvalues.render" (dict "value" .Values.deployment.args "context" $) | nindent 12 }}
           {{- end }}
           ports:
-            {{- range .Values.deployment.ports }}
-            - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol }}
+            {{- if .Values.deployment.ports }}
+            {{- toYaml .Values.deployment.ports | nindent 12 }}
+            {{ else }}
+            - containerPort: {{ .Values.service.port }}
+              name: http
+              protocol: TCP
             {{- end }}
           {{- if or (.Values.deployment.volumeMounts) (and (eq .Values.persistence.enabled true) (eq .Values.persistence.mountPVC true) )}}
           volumeMounts:

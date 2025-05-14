@@ -1,0 +1,30 @@
+{{ if .Values.httpRoute.enabled }}
+---
+{{- $applicationNameTpl := include "application.name" . -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ template "application.name" . }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+    {{- with .Values.ingress.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  parentRefs:
+  {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
+  hostnames:
+    - '{{ .Release.Name }}.example.com'
+  rules:
+  {{- if .Values.httpRoute.rules }}
+  {{ toYaml .Values.httpRoute.rules }}
+  {{ else }}
+  - matches:
+    - path:
+        type: PathPrefix 
+        value: "/"
+    backendRefs:
+    - name: {{ template "application.name" . }}
+      port: {{ .Values.httpRoute.servicePort }}
+  {{ end }}
+{{ end }}
