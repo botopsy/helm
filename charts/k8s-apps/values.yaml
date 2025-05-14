@@ -567,12 +567,23 @@ ingress:
 httpRoute:
   enabled: false
   additionalLabels: {}
-  hostname: ""
+  gatewayName: istio-gateway
+  gatewayNamespace: istio-system
+  hostnames: 
+    - "test.com"
   servicePort: 8080
-  parentRefs:
-    - name: istio-gateway
-      namespace: istio-system
-  rules: []
+  matches: []
+    # - path:
+    #     type: PathPrefix
+    #     value: /api
+    #   method: GET
+    # - path:
+    #     type: PathPrefix
+    #     value: /admin
+    #   headers:
+    #     - name: x-role
+    #       value: admin
+
 
 virtualService:
   enabled: false
