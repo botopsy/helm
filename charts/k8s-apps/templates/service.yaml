@@ -19,9 +19,9 @@ spec:
   ports:
 {{- if .Values.service.ports }}
 {{ toYaml .Values.service.ports | indent 4 }}
-{{ else }}
-    port: {{ .Values.service.port }}
-    targetPort: {{ .Values.service.port }}
+{{- else }}
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
 {{- end }}
   selector:
 {{ include "application.selectorLabels" . | indent 4 }}
